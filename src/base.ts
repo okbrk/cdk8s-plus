@@ -1,6 +1,6 @@
 import { ApiObjectMetadata, ApiObject, ApiObjectMetadataDefinition } from 'cdk8s';
 import { Construct, IConstruct } from 'constructs';
-import { IApiResource, IApiEndpoint } from './api-resource';
+import { IApiResource, IApiEndpoint } from './api-resource.generated';
 
 /**
  * Initialization properties for resources.

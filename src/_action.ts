@@ -1,6 +1,6 @@
 import { Container } from './container';
 import * as k8s from './imports/k8s';
-import { ConnectionScheme, HttpHeader } from './probe';
+import { ConnectionScheme } from './probe';
 
 /**
  * Utility class to implement the conversion between our API and the k8s action
@@ -21,25 +21,11 @@ export class Action {
     return { command };
   }
 
-  public static fromHttpGet(container: Container, path: string, options: {
-    port?: number;
-    scheme?: ConnectionScheme;
-    host?: string;
-    httpHeaders?: HttpHeader[];
-  } = {}): k8s.HttpGetAction {
+  public static fromHttpGet(container: Container, path: string, options: { port?: number; scheme?: ConnectionScheme } = { }): k8s.HttpGetAction {
     return {
       path,
       port: k8s.IntOrString.fromNumber(options.port ?? container.portNumber ?? 80),
       scheme: options.scheme ?? ConnectionScheme.HTTP,
-      host: options.host,
-      httpHeaders: options.httpHeaders,
-    };
-  }
-
-  public static fromGrpc(container: Container, options: { port?: number; service?: string } = {}): k8s.GrpcAction {
-    return {
-      port: options.port ?? container.portNumber ?? 80,
-      service: options.service,
     };
   }
 }

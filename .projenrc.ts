@@ -1,13 +1,14 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import { Cdk8sTeamJsiiProject } from '@cdk8s/projen-common';
-
-// the version of k8s this branch supports
-const SPEC_VERSION = fs.readFileSync('projenrc/latest-k8s-version.txt', 'utf-8');
-const K8S_VERSION = `1.${SPEC_VERSION}.0`;
+import { github, javascript } from 'projen';
+import { generateApiResources } from './projenrc/gen-api-resource';
 
 // the latest version of k8s we support
-const LATEST_SUPPORTED_K8S_VERSION = Number(SPEC_VERSION);
+const LATEST_SUPPORTED_K8S_VERSION = 27;
+
+// the version of k8s this branch supports
+const SPEC_VERSION = '27';
+const K8S_VERSION = `1.${SPEC_VERSION}.0`;
 
 const project = new Cdk8sTeamJsiiProject({
   name: `cdk8s-plus-${SPEC_VERSION}`,
@@ -25,9 +26,11 @@ const project = new Cdk8sTeamJsiiProject({
     'microservices',
   ],
 
+  projenCredentials: github.GithubCredentials.fromPersonalAccessToken(),
+
   peerDeps: [
     'cdk8s',
-    'constructs@^10.8.1',
+    'constructs',
   ],
   deps: [
     'minimatch',
@@ -36,10 +39,11 @@ const project = new Cdk8sTeamJsiiProject({
     'minimatch',
   ],
   devDeps: [
-    'constructs@^10.8.1',
+    'constructs',
+    '@types/minimatch',
     'cdk8s',
     'cdk8s-cli',
-    'constructs@^10.8.1',
+    'constructs',
     'snake-case',
     '@cdk8s/projen-common',
   ],
@@ -48,11 +52,6 @@ const project = new Cdk8sTeamJsiiProject({
   releaseTagPrefix: `cdk8s-plus-${SPEC_VERSION}/`,
   releaseWorkflowName: `release-k8s.${SPEC_VERSION}`,
   defaultReleaseBranch: `k8s-${SPEC_VERSION}/main`,
-  githubOptions: {
-    // use mergify because merge queues don't support branch patterns
-    mergify: true,
-    mergeQueue: false,
-  },
 
   golangBranch: `k8s.${SPEC_VERSION}`,
   depsUpgradeOptions: {
@@ -63,6 +62,11 @@ const project = new Cdk8sTeamJsiiProject({
         `k8s-${LATEST_SUPPORTED_K8S_VERSION - 1}/main`,
         `k8s-${LATEST_SUPPORTED_K8S_VERSION - 2}/main`,
       ],
+
+      // run upgrade-dependencies workflow at a different hour than other cdk8s
+      // repos to decrease flakiness of integration tests caused by new versions
+      // of cdk8s being published to different languages at the same time
+      schedule: javascript.UpgradeDependenciesSchedule.expressions(['0 2 * * *']),
     },
   },
   backport: true,
@@ -72,18 +76,15 @@ const project = new Cdk8sTeamJsiiProject({
   ],
 });
 
-// not using `npmAccess` property because projen omits values that are
-// identical to npm defaults.
-project.package.addField('publishConfig', { access: 'public' });
-
-project.gitignore.exclude('.vscode/', '.idea/');
+project.gitignore.exclude('.vscode/');
 
 const importdir = path.join('src', 'imports');
 
-project.addTask('import', {
+const importTask = project.addTask('import', {
   exec: `cdk8s -l typescript -o ${importdir} import k8s@${K8S_VERSION}`,
   description: 'Updates imports based on latest version of cdk8s-cli.',
 });
+project.compileTask.prependSpawn(importTask);
 
 const docgenTask = project.tasks.tryFind('docgen')!;
 docgenTask.reset();
@@ -97,13 +98,10 @@ for (const lang of ['typescript', 'python', 'java']) {
   project.gitignore.exclude(output);
 }
 
-// Allow skipping tests in build based on an env variable
-// This is only used by the package integrity check running outside the repo
-// While this check needs to replicate the release, it does not need to run tests
-project.testTask.addCondition("node -e \"if (process.env.SKIP_TESTS==='1') process.exit(1)\"");
-
-// Projen task to update references to old versions of cdk8s-plus
-const versionTaskObject = project.addTask('rotate');
-versionTaskObject.exec('ts-node projenrc/rotate.ts ' + SPEC_VERSION);
+project.addTask('regenerate-api-information', {
+  description: 'Regenerate the information about the kubernetes API needed for auto-generating source code files. Requires access to a kubernetes cluster.',
+  exec: 'kubectl api-resources -o wide > api-resources.txt',
+});
+generateApiResources(project, 'api-resources.txt', 'src/api-resource.generated.ts');
 
 project.synth();

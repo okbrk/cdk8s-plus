@@ -57,11 +57,6 @@ describe('fromHttpGet()', () => {
       periodSeconds: Duration.seconds(5),
       successThreshold: 3,
       timeoutSeconds: Duration.minutes(2),
-      host: '1.1.1.1',
-      httpHeaders: [{
-        name: 'A-Custom-Header',
-        value: 'some-value',
-      }],
     });
 
     // THEN
@@ -70,13 +65,6 @@ describe('fromHttpGet()', () => {
         path: '/hello',
         port: k8s.IntOrString.fromNumber(5555),
         scheme: 'HTTP',
-        host: '1.1.1.1',
-        httpHeaders: [
-          {
-            name: 'A-Custom-Header',
-            value: 'some-value',
-          },
-        ],
       },
       failureThreshold: 11,
       initialDelaySeconds: 60,
@@ -206,57 +194,6 @@ describe('fromTcpSocket()', () => {
       successThreshold: 3,
       timeoutSeconds: 120,
     });
-  });
-
-  describe('fromGrpc()', () => {
-
-    test('minimal usage', () => {
-      // GIVEN
-      const container = new Container({ image: 'foobar', port: 5555 });
-
-      // WHEN
-      const min = Probe.fromGrpc( { port: 5555 } );
-
-      // THEN
-      expect(min._toKube(container)).toEqual({
-        grpc: {
-          port: 5555,
-        },
-        failureThreshold: 3,
-        initialDelaySeconds: undefined,
-        periodSeconds: undefined,
-        successThreshold: undefined,
-        timeoutSeconds: undefined,
-      });
-    });
-
-    test('options', () => {
-      // GIVEN
-      const container = new Container({ image: 'foobar', port: 5555 });
-
-      // WHEN
-      const min = Probe.fromGrpc({
-        port: 5555,
-        failureThreshold: 11,
-        initialDelaySeconds: Duration.minutes(1),
-        periodSeconds: Duration.seconds(5),
-        successThreshold: 3,
-        timeoutSeconds: Duration.minutes(2),
-      });
-
-      // THEN
-      expect(min._toKube(container)).toEqual({
-        grpc: {
-          port: 5555,
-        },
-        failureThreshold: 11,
-        initialDelaySeconds: 60,
-        periodSeconds: 5,
-        successThreshold: 3,
-        timeoutSeconds: 120,
-      });
-    });
-
   });
 
 });

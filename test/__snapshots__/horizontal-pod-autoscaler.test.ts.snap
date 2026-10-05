@@ -11,7 +11,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -63,7 +62,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -128,7 +126,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -180,7 +177,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -258,7 +254,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -310,7 +305,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -388,7 +382,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -440,7 +433,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -518,7 +510,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -570,7 +561,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -647,7 +637,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -699,7 +688,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -776,7 +764,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -828,7 +815,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -905,7 +891,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -957,7 +942,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1034,7 +1018,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -1086,7 +1069,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1163,7 +1145,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -1215,7 +1196,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1292,7 +1272,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -1344,7 +1323,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1421,7 +1399,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -1473,7 +1450,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1551,7 +1527,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -1603,7 +1578,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1685,7 +1659,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -1737,7 +1710,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1821,7 +1793,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -1873,7 +1844,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -1991,7 +1961,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -2043,7 +2012,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2127,7 +2095,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -2179,7 +2146,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2249,7 +2215,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -2301,7 +2266,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2373,7 +2337,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -2431,7 +2394,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2496,7 +2458,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -2548,7 +2509,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2673,7 +2633,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2744,7 +2703,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -2796,7 +2754,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2861,7 +2818,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-Deployment-c83f5e59",
@@ -2913,7 +2869,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },
@@ -2978,7 +2933,6 @@ Array [
     "spec": Object {
       "minReadySeconds": 0,
       "progressDeadlineSeconds": 600,
-      "revisionHistoryLimit": 10,
       "selector": Object {
         "matchLabels": Object {
           "cdk8s.io/metadata.addr": "test-deployment-c84c12f6",
@@ -3036,7 +2990,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
           "volumes": Array [
             Object {

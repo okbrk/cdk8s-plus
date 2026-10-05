@@ -19,10 +19,8 @@ export abstract class AbstractPod extends base.Resource implements IPodSelector,
   public readonly dns: PodDns;
   public readonly dockerRegistryAuth?: secret.ISecret;
   public readonly automountServiceAccountToken: boolean;
-  public readonly shareProcessNamespace: boolean;
   public readonly hostNetwork?: boolean;
   public readonly terminationGracePeriod?: Duration;
-  public readonly enableServiceLinks?: boolean;
 
   protected readonly isolate: boolean;
 
@@ -42,11 +40,9 @@ export abstract class AbstractPod extends base.Resource implements IPodSelector,
     this.dns = new PodDns(props.dns);
     this.dockerRegistryAuth = props.dockerRegistryAuth;
     this.automountServiceAccountToken = props.automountServiceAccountToken ?? false;
-    this.shareProcessNamespace = props.shareProcessNamespace ?? false;
     this.isolate = props.isolate ?? false;
     this.hostNetwork = props.hostNetwork ?? false;
     this.terminationGracePeriod = props.terminationGracePeriod ?? Duration.seconds(30);
-    this.enableServiceLinks = props.enableServiceLinks;
 
     if (props.containers) {
       props.containers.forEach(c => this.addContainer(c));
@@ -126,15 +122,15 @@ export abstract class AbstractPod extends base.Resource implements IPodSelector,
   public addInitContainer(cont: container.ContainerProps): container.Container {
 
     // https://kubernetes.io/docs/concepts/workloads/pods/init-containers/#differences-from-regular-containers
-    if (!this.isSidecarContainer(cont) && cont.readiness) {
+    if (cont.readiness) {
       throw new Error('Init containers must not have a readiness probe');
     }
 
-    if (!this.isSidecarContainer(cont) && cont.liveness) {
+    if (cont.liveness) {
       throw new Error('Init containers must not have a liveness probe');
     }
 
-    if (!this.isSidecarContainer(cont) && cont.startup) {
+    if (cont.startup) {
       throw new Error('Init containers must not have a startup probe');
     }
 
@@ -145,13 +141,6 @@ export abstract class AbstractPod extends base.Resource implements IPodSelector,
 
     this._initContainers.push(impl);
     return impl;
-  }
-
-  // Any initContainer that has `restartPolicy=Always` is a sidecar container. Please refer to
-  // documentation for more details:
-  // https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/#differences-from-init-containers
-  private isSidecarContainer(cont: container.ContainerProps) {
-    return cont.restartPolicy === container.ContainerRestartPolicy.ALWAYS;
   }
 
   public addHostAlias(hostAlias: HostAlias): void {
@@ -201,10 +190,6 @@ export abstract class AbstractPod extends base.Resource implements IPodSelector,
     const initContainers: k8s.Container[] = [];
 
     for (const cont of this.containers) {
-      // check if restartPolicy is defined for containers
-      if (cont.restartPolicy) {
-        throw new Error(`Invalid container spec: ${cont.name} has non-empty restartPolicy field. The field can only be specified for initContainers`);
-      }
       // automatically add volume from the container mount
       // to this pod so thats its available to the container.
       for (const mount of cont.mounts) {
@@ -253,10 +238,8 @@ export abstract class AbstractPod extends base.Resource implements IPodSelector,
       setHostnameAsFqdn: dns.hostnameAsFQDN,
       imagePullSecrets: this.dockerRegistryAuth ? [{ name: this.dockerRegistryAuth.name }] : undefined,
       automountServiceAccountToken: this.automountServiceAccountToken,
-      shareProcessNamespace: this.shareProcessNamespace,
       hostNetwork: this.hostNetwork,
       terminationGracePeriodSeconds: this.terminationGracePeriod?.toSeconds(),
-      enableServiceLinks: this.enableServiceLinks,
     };
 
   }
@@ -444,14 +427,6 @@ export interface AbstractPodProps extends base.ResourceProps {
   readonly automountServiceAccountToken?: boolean;
 
   /**
-   * When process namespace sharing is enabled, processes in a container are visible to all other containers in the same pod.
-   *
-   * @default false
-   * @see https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/
-   */
-  readonly shareProcessNamespace?: boolean;
-
-  /**
    * Isolates the pod. This will prevent any ingress or egress connections to / from this pod.
    * You can however allow explicit connections post instantiation by using the `.connections` property.
    *
@@ -472,22 +447,12 @@ export interface AbstractPodProps extends base.ResourceProps {
    * @default Duration.seconds(30)
    */
   readonly terminationGracePeriod?: Duration;
-
-  /**
-   * Indicates whether information about services should be injected into pod's
-   * environment variables, matching the syntax of Docker links.
-   *
-   * @default true
-   * @see https://kubernetes.io/docs/concepts/services-networking/connect-applications-service/#accessing-the-service
-   */
-  readonly enableServiceLinks?: boolean;
 }
 
 /**
  * Properties for `Pod`.
  */
-export interface PodProps extends AbstractPodProps {
-}
+export interface PodProps extends AbstractPodProps {}
 
 /**
  * Options for `LabelSelector.of`.
@@ -516,8 +481,7 @@ export class LabelSelector {
 
   private constructor(
     private readonly expressions: LabelExpression[],
-    private readonly labels: { [key: string]: string }) {
-  }
+    private readonly labels: { [key: string]: string }) {}
 
   public isEmpty() {
     return this.expressions.length === 0 && Object.keys(this.labels).length === 0;
@@ -531,11 +495,7 @@ export class LabelSelector {
       return {};
     }
     return {
-      matchExpressions: undefinedIfEmpty(this.expressions.map(q => ({
-        key: q.key,
-        operator: q.operator,
-        values: q.values,
-      }))),
+      matchExpressions: undefinedIfEmpty(this.expressions.map(q => ({ key: q.key, operator: q.operator, values: q.values }))),
       matchLabels: undefinedIfEmpty(this.labels),
     };
   }
@@ -784,8 +744,7 @@ export class PodDns {
     subdomain?: string;
     hostnameAsFQDN: boolean;
     policy: string;
-    config: k8s.PodDnsConfig;
-  } {
+    config: k8s.PodDnsConfig; } {
 
     if (this.policy === DnsPolicy.NONE && this.nameservers.length === 0) {
       throw new Error('When dns policy is set to NONE, at least one nameserver is required');
@@ -877,7 +836,7 @@ export enum RestartPolicy {
   /**
    * Never restart the pod.
    */
-  NEVER = 'Never',
+  NEVER = 'Never'
 }
 
 export enum FsGroupChangePolicy {
@@ -892,7 +851,7 @@ export enum FsGroupChangePolicy {
   /**
    * Always change permission and ownership of the volume when volume is mounted.
    */
-  ALWAYS = 'Always',
+  ALWAYS = 'Always'
 }
 
 /**
@@ -1205,10 +1164,10 @@ export interface PodsSelectOptions {
   readonly labels?: { [key: string]: string };
 
   /**
-   * Expressions the pods must satisify.
-   *
-   * @default - no expressions requirements.
-   */
+    * Expressions the pods must satisify.
+    *
+    * @default - no expressions requirements.
+    */
   readonly expressions?: LabelExpression[];
 
   /**
@@ -1240,8 +1199,7 @@ export class Pods extends Construct implements IPodSelector {
     return Pods.select(scope, id, { namespaces: options.namespaces });
   }
 
-  constructor(
-    scope: Construct, id: string,
+  constructor(scope: Construct, id: string,
     private readonly expressions?: LabelExpression[],
     private readonly labels?: { [key: string]: string },
     private readonly namespaces?: namespace.INamespaceSelector) {
@@ -1278,24 +1236,21 @@ export class Pods extends Construct implements IPodSelector {
  * A node that is matched by label selectors.
  */
 export class LabeledNode {
-  public constructor(public readonly labelSelector: NodeLabelQuery[]) {
-  };
+  public constructor(public readonly labelSelector: NodeLabelQuery[]) {};
 }
 
 /**
  * A node that is matched by taint selectors.
  */
 export class TaintedNode {
-  public constructor(public readonly taintSelector: NodeTaintQuery[]) {
-  };
+  public constructor(public readonly taintSelector: NodeTaintQuery[]) {};
 }
 
 /**
  * A node that is matched by its name.
  */
 export class NamedNode {
-  public constructor(public readonly name: string) {
-  };
+  public constructor(public readonly name: string) {};
 }
 
 /**
@@ -1371,8 +1326,7 @@ export class Topology {
     return new Topology(key);
   }
 
-  private constructor(public readonly key: string) {
-  };
+  private constructor(public readonly key: string) {};
 }
 
 /**
@@ -1439,8 +1393,7 @@ export class PodScheduling {
   private _tolerations: k8s.Toleration[] = [];
   private _nodeName?: string;
 
-  constructor(protected readonly instance: AbstractPod) {
-  }
+  constructor(protected readonly instance: AbstractPod) {}
 
   /**
    * Assign this pod a specific node by name.
@@ -1702,8 +1655,7 @@ export interface PodConnectionsAllowFromOptions {
  */
 export class PodConnections {
 
-  constructor(protected readonly instance: AbstractPod) {
-  }
+  constructor(protected readonly instance: AbstractPod) {}
 
   /**
    * Allow network traffic from this pod to the peer.

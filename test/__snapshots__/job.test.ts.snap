@@ -48,7 +48,6 @@ Array [
             "runAsNonRoot": true,
           },
           "setHostnameAsFQDN": false,
-          "shareProcessNamespace": false,
           "terminationGracePeriodSeconds": 30,
         },
       },

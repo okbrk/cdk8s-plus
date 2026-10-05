@@ -65,19 +65,7 @@ export enum ConnectionScheme {
   /**
    * Use HTTPS request for connecting to host.
    */
-  HTTPS = 'HTTPS',
-}
-
-export interface HttpHeader {
-  /**
-   * The HTTP Header name to be used
-   */
-  readonly name: string;
-
-  /**
-   * The HTTP header value to be set
-   */
-  readonly value: string;
+  HTTPS = 'HTTPS'
 }
 
 /**
@@ -97,20 +85,6 @@ export interface HttpGetProbeOptions extends ProbeOptions {
    *  @default ConnectionScheme.HTTP
    */
   readonly scheme?: ConnectionScheme;
-
-  /**
-   * The host name to connect to on the container.
-   *
-   * @default - defaults to the pod IP
-   */
-  readonly host?: string;
-
-  /**
-   * Custom HTTP headers to set in the probe request. Note that HTTP allows repeated headers.
-   *
-   * @default - no custom headers are set
-   */
-  readonly httpHeaders?: HttpHeader[];
 }
 
 /**
@@ -140,25 +114,6 @@ export interface TcpSocketProbeOptions extends ProbeOptions {
 }
 
 /**
- * Options for `Probe.fromGrpc()`.
- */
-export interface GrpcProbeOptions extends ProbeOptions {
-  /**
-   * The TCP port to connect to on the container.
-   *
-   * @default - defaults to `container.port`.
-   */
-  readonly port?: number;
-
-  /**
-   * Service is the name of the service to place in the gRPC HealthCheckRequest (see https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
-   *
-   * @default - If this is not specified, the default behavior is defined by gRPC.
-   */
-  readonly service?: string;
-}
-
-/**
  * Probe describes a health check to be performed against a container to
  * determine whether it is alive or ready to receive traffic.
  */
@@ -171,7 +126,7 @@ export class Probe {
    * @param options Options
    */
   public static fromHttpGet(path: string, options: HttpGetProbeOptions = {}): Probe {
-    return new Probe(options, undefined, undefined, { path, ...options }, undefined);
+    return new Probe(options, undefined, undefined, { path, ...options });
   }
 
   /**
@@ -181,7 +136,7 @@ export class Probe {
    * @param options Options
    */
   public static fromCommand(command: string[], options: CommandProbeOptions = {}): Probe {
-    return new Probe(options, undefined, { command, ...options }, undefined, undefined);
+    return new Probe(options, undefined, { command, ...options }, undefined);
   }
 
   /**
@@ -190,24 +145,14 @@ export class Probe {
    * @param options Options
    */
   public static fromTcpSocket(options: TcpSocketProbeOptions = {}): Probe {
-    return new Probe(options, options, undefined, undefined, undefined);
-  }
-
-  /**
-   * Defines a probe based on a gRPC request to the container.
-   *
-   * @param options Options
-   */
-  public static fromGrpc(options: GrpcProbeOptions = {}): Probe {
-    return new Probe(options, undefined, undefined, undefined, options);
+    return new Probe(options, options, undefined, undefined);
   }
 
   private constructor(
     private readonly probeOptions: ProbeOptions,
     private readonly tcpSocketOptions?: TcpSocketProbeOptions,
     private readonly commandOptions?: { command: string[] } & ProbeOptions,
-    private readonly httpGetOptions?: { path: string } & HttpGetProbeOptions,
-    private readonly grpcOptions?: GrpcProbeOptions) {}
+    private readonly httpGetOptions?: { path: string } & HttpGetProbeOptions) {}
 
   /**
    * @internal
@@ -217,7 +162,6 @@ export class Probe {
     const exec = this.commandOptions ? _action.Action.fromCommand(this.commandOptions.command) : undefined;
     const httpGet = this.httpGetOptions ? _action.Action.fromHttpGet(cont, this.httpGetOptions.path, this.httpGetOptions) : undefined;
     const tcpSocket = this.tcpSocketOptions ? _action.Action.fromTcpSocket(cont, this.tcpSocketOptions) : undefined;
-    const grpc = this.grpcOptions ? _action.Action.fromGrpc(cont, this.grpcOptions) : undefined;
 
     return {
       failureThreshold: this.probeOptions.failureThreshold ?? 3,
@@ -228,7 +172,6 @@ export class Probe {
       exec: exec,
       httpGet,
       tcpSocket,
-      grpc,
     };
   }
 }

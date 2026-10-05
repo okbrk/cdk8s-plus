@@ -1,6 +1,6 @@
 import { Testing, ApiObject } from 'cdk8s';
 import { Construct } from 'constructs';
-import { ConfigMap, Resource, ResourceProps, k8s } from '../src';
+import { Resource, ResourceProps, k8s } from '../src';
 
 test('Can mutate metadata', () => {
 
@@ -40,16 +40,4 @@ test('Can mutate metadata', () => {
     },
   }]);
 
-});
-
-test('Resources support construct mixins', () => {
-  const chart = Testing.chart();
-  const resource = new ConfigMap(chart, 'Config');
-  const mixin = {
-    supports: () => true,
-    applyTo: jest.fn(),
-  };
-
-  expect(resource.with(mixin)).toBe(resource);
-  expect(mixin.applyTo).toHaveBeenCalledWith(resource);
 });

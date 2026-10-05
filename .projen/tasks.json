@@ -1,9 +1,41 @@
 {
-  "manifestVersion": 3,
-  "env": {
-    "PATH": "$(npx -c \"node --print process.env.PATH\")"
-  },
   "tasks": {
+    "backport": {
+      "name": "backport",
+      "requiredEnv": [
+        "BACKPORT_PR_NUMBER",
+        "GITHUB_TOKEN"
+      ],
+      "steps": [
+        {
+          "exec": "BACKPORT_HOME=$(mktemp -d) && mkdir -p ${BACKPORT_HOME} && cp .backportrc.json ${BACKPORT_HOME} && cd ${BACKPORT_HOME} && backport --dir ${BACKPORT_HOME}/cdk8s-plus --accesstoken ${GITHUB_TOKEN} --pr ${BACKPORT_PR_NUMBER} --non-interactive"
+        }
+      ]
+    },
+    "backport:k8s-25/main": {
+      "name": "backport:k8s-25/main",
+      "requiredEnv": [
+        "BACKPORT_PR_NUMBER",
+        "GITHUB_TOKEN"
+      ],
+      "steps": [
+        {
+          "exec": "BACKPORT_HOME=$(mktemp -d) && mkdir -p ${BACKPORT_HOME} && cp .backportrc.json ${BACKPORT_HOME} && cd ${BACKPORT_HOME} && backport --dir ${BACKPORT_HOME}/cdk8s-plus --accesstoken ${GITHUB_TOKEN} --pr ${BACKPORT_PR_NUMBER} --branch k8s-25/main"
+        }
+      ]
+    },
+    "backport:k8s-26/main": {
+      "name": "backport:k8s-26/main",
+      "requiredEnv": [
+        "BACKPORT_PR_NUMBER",
+        "GITHUB_TOKEN"
+      ],
+      "steps": [
+        {
+          "exec": "BACKPORT_HOME=$(mktemp -d) && mkdir -p ${BACKPORT_HOME} && cp .backportrc.json ${BACKPORT_HOME} && cd ${BACKPORT_HOME} && backport --dir ${BACKPORT_HOME}/cdk8s-plus --accesstoken ${GITHUB_TOKEN} --pr ${BACKPORT_PR_NUMBER} --branch k8s-26/main"
+        }
+      ]
+    },
     "build": {
       "name": "build",
       "description": "Full release build",
@@ -36,37 +68,15 @@
         "CHANGELOG": "dist/changelog.md",
         "BUMPFILE": "dist/version.txt",
         "RELEASETAG": "dist/releasetag.txt",
-        "RELEASE_TAG_PREFIX": "cdk8s-plus-34/",
-        "BUMP_PACKAGE": "commit-and-tag-version@^13"
+        "RELEASE_TAG_PREFIX": "cdk8s-plus-27/",
+        "RELEASABLE_COMMITS": "git log --no-merges --oneline $LATEST_TAG..HEAD -E --grep '^(feat|fix){1}(\\([^()[:space:]]+\\))?(!)?:[[:blank:]]+.+'"
       },
       "steps": [
         {
-          "builtin": "release/resolve-latest-tag",
-          "outputEnv": "LATEST_TAG"
-        },
-        {
-          "spawn": "bump:releasable-commits",
-          "outputEnv": "RELEASABLE_COMMITS",
-          "condition": "git rev-parse --verify --quiet \"refs/tags/$LATEST_TAG\""
-        },
-        {
-          "builtin": "release/suggest-version-bump",
-          "outputEnv": "SUGGESTED_BUMP"
-        },
-        {
-          "builtin": "release/apply-version-bump"
+          "builtin": "release/bump-version"
         }
       ],
-      "condition": "git log --oneline -1 | grep -v \"chore(release):\" > /dev/null"
-    },
-    "bump:releasable-commits": {
-      "name": "bump:releasable-commits",
-      "description": "Print the releasable commits since the latest release",
-      "steps": [
-        {
-          "exec": "git log --no-merges --oneline $LATEST_TAG..HEAD -E --grep '^(feat|fix){1}(\\([^()[:space:]]+\\))?(!)?:[[:blank:]]+.+' --grep 'chore\\(deps\\): upgrade runtime dependencies' --grep 'chore\\(deps\\): upgrade compiler dependencies'"
-        }
-      ]
+      "condition": "! git log --oneline -1 | grep -q \"chore(release):\""
     },
     "clobber": {
       "name": "clobber",
@@ -76,35 +86,22 @@
       },
       "steps": [
         {
-          "execArgs": [
-            "git",
-            "checkout",
-            "-b",
-            "scratch"
-          ],
+          "exec": "git checkout -b scratch",
           "name": "save current HEAD in \"scratch\" branch"
         },
         {
-          "exec": "git checkout \"$BRANCH\""
+          "exec": "git checkout $BRANCH"
         },
         {
-          "execArgs": [
-            "git",
-            "fetch",
-            "origin"
-          ],
+          "exec": "git fetch origin",
           "name": "fetch latest changes from origin"
         },
         {
-          "exec": "git reset --hard \"origin/$BRANCH\"",
+          "exec": "git reset --hard origin/$BRANCH",
           "name": "hard reset to origin commit"
         },
         {
-          "execArgs": [
-            "git",
-            "clean",
-            "-fdx"
-          ],
+          "exec": "git clean -fdx",
           "name": "clean all untracked files"
         },
         {
@@ -118,13 +115,7 @@
       "description": "Perform API compatibility check against latest version",
       "steps": [
         {
-          "execArgs": [
-            "jsii-diff",
-            "npm:cdk8s-plus-34",
-            "-k",
-            "--ignore-file",
-            ".compatignore"
-          ]
+          "exec": "jsii-diff npm:$(node -p \"require('./package.json').name\") -k --ignore-file .compatignore || (echo \"\nUNEXPECTED BREAKING CHANGES: add keys such as 'removed:constructs.Node.of' to .compatignore to skip.\n\" && exit 1)"
         }
       ]
     },
@@ -132,6 +123,9 @@
       "name": "compile",
       "description": "Only compile",
       "steps": [
+        {
+          "spawn": "import"
+        },
         {
           "exec": "jsii --silence-warnings=reserved-word"
         }
@@ -142,12 +136,7 @@
       "description": "Synthesize project files",
       "steps": [
         {
-          "execArgs": [
-            "ts-node",
-            "--project",
-            "projenrc/tsconfig.json",
-            ".projenrc.ts"
-          ]
+          "exec": "ts-node --project tsconfig.dev.json .projenrc.ts"
         }
       ]
     },
@@ -205,26 +194,9 @@
     "eslint": {
       "name": "eslint",
       "description": "Runs eslint against the codebase",
-      "env": {
-        "ESLINT_USE_FLAT_CONFIG": "false",
-        "NODE_NO_WARNINGS": "1"
-      },
       "steps": [
         {
-          "execArgs": [
-            "eslint",
-            "--ext",
-            ".ts,.tsx",
-            "--fix",
-            "--no-error-on-unmatched-pattern",
-            "$@",
-            "src",
-            "test",
-            "build-tools",
-            "projenrc",
-            ".projenrc.ts"
-          ],
-          "receiveArgs": true
+          "exec": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test build-tools projenrc .projenrc.ts"
         }
       ]
     },
@@ -233,7 +205,7 @@
       "description": "Updates imports based on latest version of cdk8s-cli.",
       "steps": [
         {
-          "exec": "cdk8s -l typescript -o src/imports import k8s@1.34.0"
+          "exec": "cdk8s -l typescript -o src/imports import k8s@1.27.0"
         }
       ]
     },
@@ -260,12 +232,7 @@
       "description": "Creates the distribution package",
       "steps": [
         {
-          "spawn": "package:js",
-          "condition": "node -e \"if (!process.env.CI) process.exit(1)\""
-        },
-        {
-          "spawn": "package-all",
-          "condition": "node -e \"if (process.env.CI) process.exit(1)\""
+          "exec": "if [ ! -z ${CI} ]; then rsync -a . .repo --exclude .git --exclude node_modules && rm -rf dist && mv .repo dist; else npx projen package-all; fi"
         }
       ]
     },
@@ -295,12 +262,7 @@
       "description": "Create dotnet language bindings",
       "steps": [
         {
-          "execArgs": [
-            "jsii-pacmak",
-            "-v",
-            "--target",
-            "dotnet"
-          ]
+          "exec": "jsii-pacmak -v --target dotnet"
         }
       ]
     },
@@ -309,12 +271,7 @@
       "description": "Create go language bindings",
       "steps": [
         {
-          "execArgs": [
-            "jsii-pacmak",
-            "-v",
-            "--target",
-            "go"
-          ]
+          "exec": "jsii-pacmak -v --target go"
         }
       ]
     },
@@ -323,12 +280,7 @@
       "description": "Create java language bindings",
       "steps": [
         {
-          "execArgs": [
-            "jsii-pacmak",
-            "-v",
-            "--target",
-            "java"
-          ]
+          "exec": "jsii-pacmak -v --target java"
         }
       ]
     },
@@ -337,12 +289,7 @@
       "description": "Create js language bindings",
       "steps": [
         {
-          "execArgs": [
-            "jsii-pacmak",
-            "-v",
-            "--target",
-            "js"
-          ]
+          "exec": "jsii-pacmak -v --target js"
         }
       ]
     },
@@ -351,12 +298,7 @@
       "description": "Create python language bindings",
       "steps": [
         {
-          "execArgs": [
-            "jsii-pacmak",
-            "-v",
-            "--target",
-            "python"
-          ]
+          "exec": "jsii-pacmak -v --target python"
         }
       ]
     },
@@ -377,21 +319,26 @@
       "name": "pre-compile",
       "description": "Prepare the project for compilation"
     },
-    "release:k8s-34/main": {
-      "name": "release:k8s-34/main",
-      "description": "Prepare a release from \"k8s-34/main\" branch",
+    "regenerate-api-information": {
+      "name": "regenerate-api-information",
+      "description": "Regenerate the information about the kubernetes API needed for auto-generating source code files. Requires access to a kubernetes cluster.",
+      "steps": [
+        {
+          "exec": "kubectl api-resources -o wide > api-resources.txt"
+        }
+      ]
+    },
+    "release:k8s-27/main": {
+      "name": "release:k8s-27/main",
+      "description": "Prepare a release from \"k8s-27/main\" branch",
       "env": {
         "RELEASE": "true",
         "MAJOR": "2",
-        "RELEASE_TAG_PREFIX": "cdk8s-plus-34/"
+        "RELEASE_TAG_PREFIX": "cdk8s-plus-27/"
       },
       "steps": [
         {
-          "execArgs": [
-            "rm",
-            "-fr",
-            "dist"
-          ]
+          "exec": "rm -fr dist"
         },
         {
           "spawn": "bump"
@@ -407,41 +354,25 @@
         }
       ]
     },
-    "rotate": {
-      "name": "rotate",
-      "steps": [
-        {
-          "exec": "ts-node projenrc/rotate.ts 34"
-        }
-      ]
-    },
     "test": {
       "name": "test",
       "description": "Run tests",
       "steps": [
         {
-          "execArgs": [
-            "jest",
-            "--passWithNoTests",
-            "--updateSnapshot"
-          ],
+          "exec": "jest --passWithNoTests --coverageProvider=v8 --updateSnapshot",
           "receiveArgs": true
         },
         {
           "spawn": "eslint"
         }
-      ],
-      "condition": "node -e \"if (process.env.SKIP_TESTS==='1') process.exit(1)\""
+      ]
     },
     "test:watch": {
       "name": "test:watch",
       "description": "Run jest in watch mode",
       "steps": [
         {
-          "execArgs": [
-            "jest",
-            "--watch"
-          ]
+          "exec": "jest --watch"
         }
       ]
     },
@@ -453,12 +384,51 @@
         "CHANGELOG": "dist/changelog.md",
         "BUMPFILE": "dist/version.txt",
         "RELEASETAG": "dist/releasetag.txt",
-        "RELEASE_TAG_PREFIX": "cdk8s-plus-34/",
-        "BUMP_PACKAGE": "commit-and-tag-version@^13"
+        "RELEASE_TAG_PREFIX": "cdk8s-plus-27/",
+        "RELEASABLE_COMMITS": "git log --no-merges --oneline $LATEST_TAG..HEAD -E --grep '^(feat|fix){1}(\\([^()[:space:]]+\\))?(!)?:[[:blank:]]+.+'"
       },
       "steps": [
         {
           "builtin": "release/reset-version"
+        }
+      ]
+    },
+    "upgrade": {
+      "name": "upgrade",
+      "description": "upgrade dependencies",
+      "env": {
+        "CI": "0"
+      },
+      "steps": [
+        {
+          "exec": "yarn upgrade npm-check-updates"
+        },
+        {
+          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='jsii-rosetta,jsii'"
+        },
+        {
+          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='jsii-rosetta,jsii'"
+        },
+        {
+          "exec": "npm-check-updates --dep peer --upgrade --target=minor --reject='jsii-rosetta,jsii'"
+        },
+        {
+          "exec": "npm-check-updates --dep prod --upgrade --target=minor --reject='jsii-rosetta,jsii'"
+        },
+        {
+          "exec": "npm-check-updates --dep optional --upgrade --target=minor --reject='jsii-rosetta,jsii'"
+        },
+        {
+          "exec": "yarn install --check-files"
+        },
+        {
+          "exec": "yarn upgrade"
+        },
+        {
+          "exec": "npx projen"
+        },
+        {
+          "spawn": "post-upgrade"
         }
       ]
     },
@@ -470,30 +440,16 @@
       },
       "steps": [
         {
-          "execArgs": [
-            "npx",
-            "npm-check-updates@20",
-            "--upgrade",
-            "--target=minor",
-            "--peer",
-            "--no-deprecated",
-            "--dep=dev",
-            "--filter=jsii,jsii-docgen,jsii-pacmak,jsii-rosetta,typescript"
-          ]
+          "exec": "yarn upgrade npm-check-updates"
+        },
+        {
+          "exec": "npm-check-updates --dep dev --upgrade --target=minor --filter='jsii-docgen,jsii-pacmak,typescript'"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "execArgs": [
-            "yarn",
-            "upgrade",
-            "jsii",
-            "jsii-docgen",
-            "jsii-pacmak",
-            "jsii-rosetta",
-            "typescript"
-          ]
+          "exec": "yarn upgrade jsii-docgen jsii-pacmak jsii-rosetta jsii typescript"
         },
         {
           "exec": "npx projen"
@@ -511,27 +467,28 @@
       },
       "steps": [
         {
-          "execArgs": [
-            "npx",
-            "npm-check-updates@20",
-            "--upgrade",
-            "--target=minor",
-            "--peer",
-            "--no-deprecated",
-            "--dep=dev",
-            "--filter=projen,@cdk8s/projen-common"
-          ]
+          "exec": "yarn upgrade npm-check-updates"
+        },
+        {
+          "exec": "npm-check-updates --dep dev --upgrade --target=minor --filter='projen,@cdk8s/projen-common'"
+        },
+        {
+          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --filter='projen,@cdk8s/projen-common'"
+        },
+        {
+          "exec": "npm-check-updates --dep peer --upgrade --target=minor --filter='projen,@cdk8s/projen-common'"
+        },
+        {
+          "exec": "npm-check-updates --dep prod --upgrade --target=minor --filter='projen,@cdk8s/projen-common'"
+        },
+        {
+          "exec": "npm-check-updates --dep optional --upgrade --target=minor --filter='projen,@cdk8s/projen-common'"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "execArgs": [
-            "yarn",
-            "upgrade",
-            "projen",
-            "@cdk8s/projen-common"
-          ]
+          "exec": "yarn upgrade @cdk8s/projen-common projen"
         },
         {
           "exec": "npx projen"
@@ -549,81 +506,19 @@
       },
       "steps": [
         {
-          "execArgs": [
-            "npx",
-            "npm-check-updates@20",
-            "--upgrade",
-            "--target=minor",
-            "--peer",
-            "--no-deprecated",
-            "--dep=dev,prod",
-            "--filter=@types/jest,cdk8s,cdk8s-cli,eslint-import-resolver-typescript,eslint-plugin-import,jest,jsii-diff,snake-case,ts-jest,ts-node,minimatch"
-          ]
+          "exec": "yarn upgrade npm-check-updates"
+        },
+        {
+          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='jsii-rosetta,jsii,projen,@cdk8s/projen-common,jsii-docgen,jsii-pacmak,typescript'"
+        },
+        {
+          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='jsii-rosetta,jsii,projen,@cdk8s/projen-common,jsii-docgen,jsii-pacmak,typescript'"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "execArgs": [
-            "yarn",
-            "upgrade",
-            "@stylistic/eslint-plugin",
-            "@types/jest",
-            "@types/node",
-            "@typescript-eslint/eslint-plugin",
-            "@typescript-eslint/parser",
-            "cdk8s",
-            "cdk8s-cli",
-            "commit-and-tag-version",
-            "constructs",
-            "eslint-import-resolver-typescript",
-            "eslint-plugin-import",
-            "eslint",
-            "jest",
-            "jest-junit",
-            "jsii-diff",
-            "snake-case",
-            "ts-jest",
-            "ts-node",
-            "minimatch"
-          ]
-        },
-        {
-          "exec": "npx projen"
-        },
-        {
-          "spawn": "post-upgrade"
-        }
-      ]
-    },
-    "upgrade-runtime-dependencies": {
-      "name": "upgrade-runtime-dependencies",
-      "description": "upgrade runtime dependencies",
-      "env": {
-        "CI": "0"
-      },
-      "steps": [
-        {
-          "execArgs": [
-            "npx",
-            "npm-check-updates@20",
-            "--upgrade",
-            "--target=minor",
-            "--peer",
-            "--no-deprecated",
-            "--dep=prod,optional",
-            "--filter=minimatch"
-          ]
-        },
-        {
-          "exec": "yarn install --check-files"
-        },
-        {
-          "execArgs": [
-            "yarn",
-            "upgrade",
-            "minimatch"
-          ]
+          "exec": "yarn upgrade @types/jest @types/minimatch @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser cdk8s cdk8s-cli constructs eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest-junit jest jsii-diff npm-check-updates snake-case standard-version ts-jest ts-node minimatch cdk8s constructs minimatch"
         },
         {
           "exec": "npx projen"
@@ -642,6 +537,9 @@
         }
       ]
     }
+  },
+  "env": {
+    "PATH": "$(npx -c \"node --print process.env.PATH\")"
   },
   "//": "~~ Generated by projen. To modify, edit .projenrc.ts and run \"npx projen\"."
 }

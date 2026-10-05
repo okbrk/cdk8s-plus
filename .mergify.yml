@@ -3,24 +3,6 @@
 queue_rules:
   - name: default
     update_method: merge
-    queue_conditions:
-      - "#approved-reviews-by>=1"
-      - -label~=(do-not-merge)
-      - status-success=build
-      - status-success=package-js
-      - status-success=package-java
-      - status-success=package-python
-      - status-success=package-dotnet
-      - status-success=package-go
-    merge_method: squash
-    commit_message_format:
-      title: pr-title
-      body: pr-body
-pull_request_rules:
-  - name: Automatic merge on approval and successful build
-    actions:
-      queue:
-        name: default
     conditions:
       - "#approved-reviews-by>=1"
       - -label~=(do-not-merge)
@@ -30,5 +12,23 @@ pull_request_rules:
       - status-success=package-python
       - status-success=package-dotnet
       - status-success=package-go
-merge_queue:
-  max_parallel_checks: 1
+pull_request_rules:
+  - name: Automatic merge on approval and successful build
+    actions:
+      delete_head_branch: {}
+      queue:
+        method: squash
+        name: default
+        commit_message_template: |-
+          {{ title }} (#{{ number }})
+
+          {{ body }}
+    conditions:
+      - "#approved-reviews-by>=1"
+      - -label~=(do-not-merge)
+      - status-success=build
+      - status-success=package-js
+      - status-success=package-java
+      - status-success=package-python
+      - status-success=package-dotnet
+      - status-success=package-go

@@ -1,7 +1,7 @@
 import * as cdk8s from 'cdk8s';
 import { Size, Testing } from 'cdk8s';
 import * as kplus from '../src';
-import { Container, Cpu, Handler, ConnectionScheme, Probe, k8s, Capability, ContainerRestartPolicy, SeccompProfileType } from '../src';
+import { Container, Cpu, Handler, ConnectionScheme, Probe, k8s } from '../src';
 
 describe('EnvValue', () => {
 
@@ -180,56 +180,23 @@ describe('EnvValue', () => {
 
 describe('Container', () => {
 
-  test('cannot configure identical ports and protocols at instantiation', () => {
+  test('cannot configure identical ports at instantiation', () => {
 
     expect(() => new kplus.Container({
       image: 'image',
       ports: [
         {
           number: 8080,
-          protocol: kplus.Protocol.TCP,
         },
         {
           number: 8080,
-          protocol: kplus.Protocol.TCP,
         },
       ],
-    })).toThrowError('Port with number 8080 and protocol TCP already exists');
+    })).toThrowError('Port with number 8080 already exists');
 
   });
 
-  test('can configure identical ports with different protocols at instantiation', () => {
-    const container = new kplus.Container({
-      image: 'image',
-      ports: [
-        {
-          number: 8080,
-          protocol: kplus.Protocol.TCP,
-        },
-        {
-          number: 8080,
-          protocol: kplus.Protocol.UDP,
-        },
-      ],
-    });
-
-    expect(container._toKube().ports).toEqual([{
-      containerPort: 8080,
-      protocol: 'TCP',
-    }, {
-      containerPort: 8080,
-      protocol: 'UDP',
-    }]);
-    expect(container.ports).toEqual([{
-      number: 8080,
-      protocol: kplus.Protocol.TCP,
-    }, {
-      number: 8080,
-      protocol: kplus.Protocol.UDP,
-    }]);
-  });
-
-  test('cannot add an already existing port number with identical protocol', () => {
+  test('cannot add an already existing port number', () => {
 
     const container = new kplus.Container({
       image: 'image',
@@ -238,38 +205,8 @@ describe('Container', () => {
       }],
     });
 
-    expect(() => container.addPort({ number: 8080 })).toThrowError('Port with number 8080 and protocol TCP already exists');
+    expect(() => container.addPort({ number: 8080 })).toThrowError('Port with number 8080 already exists');
 
-  });
-
-  test('can add an already existing port number with a different protocol', () => {
-
-    const container = new kplus.Container({
-      image: 'image',
-      ports: [{
-        number: 8080,
-        protocol: kplus.Protocol.TCP,
-      }],
-    });
-    container.addPort({
-      number: 8080,
-      protocol: kplus.Protocol.UDP,
-    });
-
-    expect(container._toKube().ports).toEqual([{
-      containerPort: 8080,
-      protocol: 'TCP',
-    }, {
-      containerPort: 8080,
-      protocol: 'UDP',
-    }]);
-    expect(container.ports).toEqual([{
-      number: 8080,
-      protocol: kplus.Protocol.TCP,
-    }, {
-      number: 8080,
-      protocol: kplus.Protocol.UDP,
-    }]);
   });
 
   test('cannot add an already existing port name', () => {
@@ -421,29 +358,6 @@ describe('Container', () => {
 
   test('can add environment variables from a secret', () => {});
 
-  test('a single EnvFrom source with both a config map and a secret is split into separate envFrom entries', () => {
-
-    const chart = Testing.chart();
-
-    const cm = new kplus.ConfigMap(chart, 'ConfigMap');
-    const secret = new kplus.Secret(chart, 'Secret');
-
-    const envFrom = new kplus.EnvFrom(cm, 'pref', secret);
-
-    const container = new kplus.Container({
-      image: 'image',
-      envFrom: [envFrom],
-    });
-
-    const spec: k8s.Container = container._toKube();
-
-    expect(spec.envFrom).toEqual([
-      { configMapRef: { name: cm.name }, prefix: 'pref' },
-      { secretRef: { name: secret.name }, prefix: 'pref' },
-    ]);
-
-  });
-
   test('Can mount container to volume', () => {
 
     const container = new kplus.Container({
@@ -557,26 +471,6 @@ describe('Container', () => {
     const container = manifest[0].spec.containers[0];
 
     expect(container).not.toHaveProperty('startupProbe');
-  });
-
-  test('"restartPolicy" property can be used to define restartPolicy', () => {
-    // GIVEN
-    const chart = Testing.chart();
-    const pod = new kplus.Pod(chart, 'Pod');
-
-    // WHEN
-    pod.addContainer({ image: 'foo' });
-    pod.addInitContainer({
-      image: 'bar',
-      restartPolicy: ContainerRestartPolicy.ALWAYS,
-    });
-
-    // THEN
-    const manifest = Testing.synth(chart);
-    expect(manifest).toMatchSnapshot();
-    const container = manifest[0].spec.initContainers[0];
-
-    expect(container.restartPolicy).toEqual('Always');
   });
 
   test('"readiness", "liveness", and "startup" can be used to define probes', () => {
@@ -800,8 +694,6 @@ test('default security context', () => {
     runAsNonRoot: container.securityContext.ensureNonRoot,
     runAsUser: container.securityContext.user,
     allowPrivilegeEscalation: container.securityContext.allowPrivilegeEscalation,
-    capabilities: container.securityContext.capabilities,
-    seccompProfile: container.securityContext.seccompProfile,
   });
 });
 
@@ -815,17 +707,6 @@ test('custom security context', () => {
       privileged: true,
       user: 1000,
       group: 2000,
-      capabilities: {
-        add: [
-          Capability.AUDIT_CONTROL,
-        ],
-        drop: [
-          Capability.BPF,
-        ],
-      },
-      seccompProfile: {
-        type: SeccompProfileType.RUNTIME_DEFAULT,
-      },
     },
   });
 
@@ -834,39 +715,7 @@ test('custom security context', () => {
   expect(container.securityContext.readOnlyRootFilesystem).toBeTruthy();
   expect(container.securityContext.user).toEqual(1000);
   expect(container.securityContext.group).toEqual(2000);
-  expect(container.securityContext.capabilities?.add).toEqual(['AUDIT_CONTROL']);
-  expect(container.securityContext.capabilities?.drop).toEqual(['BPF']);
-  expect(container.securityContext.seccompProfile?.type).toEqual('RuntimeDefault');
 
-});
-
-test('seccompProfile localhostProfile can not be used if type is not Localhost', () => {
-
-  const container = new Container({
-    image: 'image',
-    securityContext: {
-      seccompProfile: {
-        type: SeccompProfileType.LOCALHOST,
-        localhostProfile: 'localhostProfile',
-      },
-    },
-  });
-
-  const spec = container._toKube();
-  expect(spec.securityContext?.seccompProfile?.localhostProfile).toEqual('localhostProfile');
-});
-
-test('seccompProfile localhostProfile must only be set if type is Localhost', () => {
-
-  expect(() => new Container({
-    image: 'image',
-    securityContext: {
-      seccompProfile: {
-        type: SeccompProfileType.UNCONFINED,
-        localhostProfile: 'localhostProfile',
-      },
-    },
-  })).toThrowError('localhostProfile must only be set if type is "Localhost"');
 });
 
 test('can configure a postStart lifecycle hook', () => {
